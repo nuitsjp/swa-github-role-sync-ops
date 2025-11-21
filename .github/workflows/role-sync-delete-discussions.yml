@@ -1,0 +1,34 @@
+name: Role Sync - Delete Discussions
+
+on:
+  workflow_dispatch:
+    inputs:
+      cleanup-mode:
+        description: 'Choose "immediate" to delete all invite discussions regardless of age.'
+        default: immediate
+        required: true
+
+permissions:
+  contents: read
+  discussions: write
+
+env:
+  ROLE_SYNC_REPO: nuitsjp/swa-github-role-sync
+  DISCUSSION_CATEGORY: Announcements
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Delete Discussions
+        uses: ./actions/discussion-cleanup
+        with:
+          github-token: ${{ secrets.ROLE_SYNC_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+          target-repo: ${{ env.ROLE_SYNC_REPO }}
+          discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
+          expiration-hours: 24
+          cleanup-mode: ${{ github.event.inputs.cleanup-mode }}

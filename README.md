@@ -129,6 +129,7 @@ README の計画に沿って、着手済みの内容と今後のアクション�
 - `git -C actions/role-sync tag --list` により `v1.0.0` 系タグを確認。次回タグ発行時はアクションリポジトリ側で `git tag vX.Y.Z && git push origin vX.Y.Z` を実行すること。
 - `actions/role-sync` / `actions/discussion-cleanup` 配下に README / LICENSE などの基本ドキュメントが揃っていることを確認。
 - 管理リポジトリ `swa-github-workflows` へのアクセスと書き込み権限を確認済み（本リポジトリでの作業）。
+- `actions/discussion-cleanup` サブモジュールに `swa-github-discussion-cleanup` Action を実装し、`dist/index.js` までビルド済み（実行方法は `.github/workflows/role-sync-*.yml` 参照）。
 
 ### 7.2 ステップ 2：サブモジュール登録（完了）
 
@@ -152,40 +153,27 @@ README の計画に沿って、着手済みの内容と今後のアクション�
   git commit -m "chore: bump role-sync submodule to v1.0.1"
   ```
 
-### 7.3 ステップ 3：ワークフロー参照更新（未着手）
+### 7.3 ステップ 3：ワークフロー参照更新（進行中）
 
-現状 `.github/workflows` ディレクトリが存在しません。以下を参考に新規作成してください。
+- `.github/workflows` 配下に次のワークフローを移設済み：
+  - `role-sync-sync.yml` / `role-sync-sync-package.yml`
+  - `role-sync-delete-discussions.yml`
+  - `role-sync-deploy-site.yml`
+  - `role-sync-npm-ci.yml`
+  - `role-sync-release.yml`
+- すべてのワークフローで `actions/checkout@v4` + `submodules: recursive` を使用し、`./actions/role-sync` / `./actions/discussion-cleanup` を参照するように更新。
+- アクションリポジトリに対して issue / release / push を行うステップでは `ROLE_SYNC_REPO_TOKEN`（PAT、`repo`+`discussions` 権限）を参照するように変更しています。まだ未設定の場合はリポジトリ Secrets に追加してください。
+- `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID` は `swa-github-workflows` 側に登録されている前提で Azure ログイン手順を残しています。
+- 今後の TODO：
+  - 新ワークフローの実行確認（PAT と Azure Secrets を登録したうえで `workflow_dispatch` を試験）。
+  - 既存通知先が `nuitsjp/swa-github-role-sync` 固定になっているため、必要に応じて `env.ROLE_SYNC_REPO` を環境依存で切り替えられるようにする。
+  - `role-sync-release.yml` は `workflow_dispatch` のみをサポートしているため、タグ push 連動が必要な場合は Event 設計を再検討する。
 
-1. `mkdir -p .github/workflows`。
-2. 例：ロール同期ワークフロー（`role-sync.yml`）。
+### 7.4 ステップ 4：旧リポジトリ整理（進行中）
 
-   ```yaml
-   name: Role Sync
-   on:
-     schedule:
-       - cron: "0 * * * *"
-     workflow_dispatch:
-   jobs:
-     sync:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-           with:
-             submodules: recursive
-         - name: Run role sync
-           uses: ./actions/role-sync
-           with:
-             github-token: ${{ secrets.ROLE_SYNC_GITHUB_TOKEN }}
-   ```
-
-3. ディスカッションクリーンアップ用ワークフローも同様に作成し、必要なシークレットを管理リポジトリに登録。
-4. 追加したワークフローの CI が通ることを確認したうえで PR を作成し、マージする。
-
-### 7.4 ステップ 4：旧リポジトリ整理（未着手）
-
-- `swa-github-role-sync` / `swa-github-discussion-cleanup` から不要なワークフロー定義（`/.github/workflows`）を削除するか、README で「管理は `swa-github-workflows` に移行済み」と明記してください。
-- 各リポジトリの README 冒頭に、利用方法・タグ案内・この管理リポジトリへのリンクを追加します。
-- Marketplace 公開方針を決める場合は issue を作成し、決定事項を README / RELEASE ノートに反映させます。
+- `swa-github-role-sync` から `.github/workflows/*.yml` を削除し、本リポジトリへ移行済み。
+- `README.md` / `README.ja.md` に「ワークフローは `swa-github-workflows` へ移管」「Discussion クリーンアップは `swa-github-discussion-cleanup` へ分離」した旨を追記済み。
+- 残タスク：ドキュメント本文に記載されている `uses: nuitsjp/swa-github-role-sync/cleanup-discussions@v1` のサンプルを新リポジトリ参照へ置換し、Marketplace への公開ポリシー記述をアップデートする。
 
 ### 7.5 ステップ 5：運用ルール策定（部分的に未実施）
 
@@ -195,8 +183,12 @@ README の計画に沿って、着手済みの内容と今後のアクション�
   3. 親リポジトリで `git submodule update --remote --merge` を実行。
   4. Pull Request でレビュー。
 - バージョニング：SemVer を採用し、Breaking Change 時のみメジャーを上げる。
-- レビュー体制：最低 1 名承認、リリースチェックリスト（テスト結果・SWA への反映確認）を PR テンプレート化する。
+- レビュー体制：最低 1 名承認、リリースチェックリスト（テスト結果・SWA への反映確認、`ROLE_SYNC_REPO_TOKEN` 設定確認）を PR テンプレート化する。
 - 今後アクションが増えた場合は `actions/<action-name>` ディレクトリを追加し、同手順でサブモジュール登録。
+- Secrets 運用：
+  - `ROLE_SYNC_REPO_TOKEN`（PAT, repo+discussions）… role-sync リポジトリへの push / Discussion 操作に使用。
+  - `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID` … Azure Static Web Apps OIDC 用。
+  - 必要に応じて SWA 関連の追加シークレットやデプロイトークンを整理する。
 
 ### 7.6 Azure Static Web Apps 連携メモ
 

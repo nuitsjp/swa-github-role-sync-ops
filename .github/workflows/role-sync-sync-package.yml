@@ -1,0 +1,56 @@
+name: Role Sync - Sync SWA Roles (released package)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  id-token: write
+  contents: read
+  discussions: write
+
+env:
+  ROLE_SYNC_REPO: nuitsjp/swa-github-role-sync
+  SWA_NAME: stapp-swa-github-repo-auth-prod
+  SWA_RG: rg-swa-github-repo-auth-prod
+  DISCUSSION_CATEGORY: Announcements
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cleanup expired discussions
+        uses: ./actions/discussion-cleanup
+        with:
+          github-token: ${{ secrets.ROLE_SYNC_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+          target-repo: ${{ env.ROLE_SYNC_REPO }}
+          discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
+          expiration-hours: 24
+          cleanup-mode: ${{ github.event_name == 'workflow_dispatch' && 'immediate' || 'expiration' }}
+
+  sync-swa-roles:
+    needs: cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Sync SWA roles (released action)
+        uses: nuitsjp/swa-github-role-sync@v1
+        with:
+          github-token: ${{ secrets.ROLE_SYNC_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+          target-repo: ${{ env.ROLE_SYNC_REPO }}
+          swa-name: ${{ env.SWA_NAME }}
+          swa-resource-group: ${{ env.SWA_RG }}
+          discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}

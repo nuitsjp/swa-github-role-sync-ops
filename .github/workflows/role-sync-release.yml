@@ -1,0 +1,101 @@
+name: Role Sync - Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer string (e.g. 1.2.3 or 1.2.3-beta.1). Prefix "v" is optional.'
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  ROLE_SYNC_REPO: nuitsjp/swa-github-role-sync
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      ROLE_SYNC_REPO_TOKEN: ${{ secrets.ROLE_SYNC_REPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Ensure release token
+        run: |
+          if [ -z "$ROLE_SYNC_REPO_TOKEN" ]; then
+            echo "ROLE_SYNC_REPO_TOKEN secret is required to release." >&2
+            exit 1
+          fi
+
+      - name: Fetch latest tags
+        working-directory: actions/role-sync
+        run: git fetch origin --tags --force
+
+      - name: Configure git user
+        working-directory: actions/role-sync
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Determine version
+        id: meta
+        working-directory: actions/role-sync
+        run: |
+          set -euo pipefail
+          input="${{ github.event.inputs.version }}"
+          input=${input#v}
+          if [[ -z "$input" ]]; then
+            echo "::error::Version input is required" >&2
+            exit 1
+          fi
+          semver_regex='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
+          if [[ ! $input =~ $semver_regex ]]; then
+            echo "::error::Version $input is not SemVer" >&2
+            exit 1
+          fi
+          tag="v$input"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "::error::Tag $tag already exists" >&2
+            exit 1
+          fi
+          echo "version=$input" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=$([[ $input == *-* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release tag
+        working-directory: actions/role-sync
+        run: git tag -a "${{ steps.meta.outputs.tag }}" -m "Release ${{ steps.meta.outputs.tag }}"
+
+      - name: Push release tag
+        working-directory: actions/role-sync
+        run: |
+          git push https://x-access-token:$ROLE_SYNC_REPO_TOKEN@github.com/${{ env.ROLE_SYNC_REPO }}.git "${{ steps.meta.outputs.tag }}"
+
+      - name: Update floating tag
+        if: steps.meta.outputs.is_prerelease != 'true'
+        working-directory: actions/role-sync
+        run: |
+          git tag -f v1 "${{ steps.meta.outputs.tag }}"
+          git push https://x-access-token:$ROLE_SYNC_REPO_TOKEN@github.com/${{ env.ROLE_SYNC_REPO }}.git v1 --force
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ env.ROLE_SYNC_REPO_TOKEN }}
+        run: |
+          tag="${{ steps.meta.outputs.tag }}"
+          is_prerelease="${{ steps.meta.outputs.is_prerelease }}"
+          if gh release view "$tag" --repo ${{ env.ROLE_SYNC_REPO }} >/dev/null 2>&1; then
+            echo "Release $tag already exists. Skipping creation."
+            exit 0
+          fi
+          flags=(--repo ${{ env.ROLE_SYNC_REPO }} --generate-notes --title "Release $tag")
+          if [[ "$is_prerelease" == "true" ]]; then
+            flags+=(--prerelease)
+          else
+            flags+=(--latest)
+          fi
+          gh release create "$tag" "${flags[@]}"
