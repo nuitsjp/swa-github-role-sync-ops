@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  SWA_NAME: swa-swa-github-workflows-prod
+  SWA_NAME: stapp-swa-github-workflows-prod
   SWA_RG: rg-swa-github-workflows-prod
 
 jobs:
