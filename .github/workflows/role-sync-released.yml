@@ -25,7 +25,7 @@ jobs:
           submodules: recursive
 
       - name: Cleanup expired discussions
-        uses: ./actions/discussion-cleanup
+        uses: nuitsjp/swa-github-discussion-cleanup@v1.0.3
         with:
           github-token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
@@ -44,7 +44,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Sync SWA roles (released action)
-        uses: nuitsjp/swa-github-role-sync@v1.0.3
+        uses: nuitsjp/swa-github-role-sync@v1.0.4
         with:
           github-token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           swa-name: ${{ env.SWA_NAME }}
