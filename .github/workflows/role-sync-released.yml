@@ -1,4 +1,4 @@
-name: Role Sync - Self Sync (Local Action)
+name: Role Sync (Released Package)
 
 on:
   workflow_dispatch:
@@ -28,16 +28,12 @@ jobs:
         with:
           github-token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
-          expiration-hours: 24
-          cleanup-mode: ${{ github.event_name == 'workflow_dispatch' && 'immediate' || 'expiration' }}
 
   sync-swa-roles:
     needs: cleanup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -46,8 +42,8 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Sync SWA roles
-        uses: ./actions/role-sync
+      - name: Sync SWA roles (released action)
+        uses: nuitsjp/swa-github-role-sync@v1
         with:
           github-token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           swa-name: ${{ env.SWA_NAME }}
