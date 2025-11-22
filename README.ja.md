@@ -41,7 +41,7 @@
 ## 提供する開発用ワークフロー
 
 - `npm-ci.yml`：`actions/role-sync` のフォーマット、Lint、テスト、Rollup ビルド、ライセンスチェック、CodeQL、依存監査をまとめて実行します。
-- `role-sync-release.yml`：手動トリガーで SemVer タグを作成し、[`nuitsjp/swa-github-role-sync`](https://github.com/nuitsjp/swa-github-role-sync) リポジトリにタグとリリースノートを公開します。
+- `release-role-sync.yml`：手動トリガーで SemVer タグを作成し、[`nuitsjp/swa-github-role-sync`](https://github.com/nuitsjp/swa-github-role-sync) リポジトリにタグとリリースノートを公開します。
 - `role-sync-self-local.yml`：サブモジュール版の Action を直接呼び出し、ロール同期と招待 Discussion 掃除を検証するジョブです。
 - `role-sync-self-released.yml`：公開済み [`nuitsjp/swa-github-role-sync@v1`](https://github.com/nuitsjp/swa-github-role-sync/tree/v1) を使った検証ジョブ。ローカル版との差分テストに利用します。
 - `deploy-site.yml`：`site/` を SWA にデプロイし、/.auth/me でロール割り当てを確認するためのサイトを公開します。
