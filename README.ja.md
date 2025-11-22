@@ -29,7 +29,7 @@
 - 以下のシークレットを Organization またはリポジトリに登録します。
   - `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID`：OIDC で `azure/login` を実行するサービス プリンシパル。
   - `AZURE_STATIC_WEB_APPS_API_TOKEN`：`Azure/static-web-apps-deploy@v1` で検証サイトを更新するためのトークン。
-  - `ACTIONS_RELEASE_TOKEN`：`repo`、`discussions`、`read:org`を含むPAT。`nuitsjp/swa-github-role-sync`と`nuitsjp/swa-github-discussion-cleanup`の両方に書き込み権限を付けたトークンを1つ発行し、本リポジトリのシークレットとして登録します。ローカル検証ワークフローでは未設定時に`GITHUB_TOKEN`をフォールバックしますが、リリースでは必須です。
+- `ACTIONS_RELEASE_TOKEN`：`repo`、`discussions`、`read:org`を含むPAT。`nuitsjp/swa-github-role-sync`と`nuitsjp/swa-github-discussion-cleanup`の両方に書き込み権限を付けたトークンを1つ発行し、本リポジトリのシークレットとして登録します（運用で使い回すため頻繁に変更しません）。ローカル検証ワークフローでは未設定時に`GITHUB_TOKEN`をフォールバックしますが、リリースでは必須です。
 - ワークフロー全体で `discussions: write`、`id-token: write`、`contents: read` 権限が必要です。`Settings > Actions > General` で既定権限を確認してください。
 
 ### Azure
@@ -63,25 +63,27 @@
     ```bash
     git submodule update --init --recursive
     ```
-3. 既存のサブモジュールを最新化します（ブランチやタグの検証時に実行）。
+3. ブランチやタグの検証が必要な場合は最新化します。
     ```bash
     git submodule update --remote --merge
     ```
-4. GitHub Secrets を CLI でまとめて登録します（例：Organization スコープ）。`AZURE_*` と `AZURE_STATIC_WEB_APPS_API_TOKEN` は必須です。
-    ```bash
-    gh secret set AZURE_CLIENT_ID --body "<client-id>"
-    gh secret set AZURE_TENANT_ID --body "<tenant-id>"
-    gh secret set AZURE_SUBSCRIPTION_ID --body "<subscription-id>"
-    gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "<swa-token>"
-    gh secret set ACTIONS_RELEASE_TOKEN --body "<actions-release-pat>"
-    ```
-    `ACTIONS_RELEASE_TOKEN`は本リポジトリで管理するリリースワークフローが外部リポジトリ（`nuitsjp/swa-github-role-sync`/`nuitsjp/swa-github-discussion-cleanup`）へタグやリリースを公開する際に使用します。PATには両リポジトリへの`repo`と`discussions`権限を付与してください。ローカル検証ワークフロー（[`role-sync-self-local.yml`](.github/workflows/role-sync-self-local.yml)、[`role-sync-self-released.yml`](.github/workflows/role-sync-self-released.yml)）では未設定時に`GITHUB_TOKEN`が自動利用されますが、リリース作業を行う場合は必ず設定してください。
-5. 必要に応じて `role-sync-self-*.yml` の環境変数（`SWA_NAME`、`SWA_RG`、`DISCUSSION_CATEGORY` など）を書き換え、変更をコミットします。
-6. `Role Sync - Self Sync (Local Action)` を手動実行し、ロール同期と Discussion の挙動を確認します。
-    ```bash
-    gh workflow run "Role Sync - Self Sync (Local Action)" --ref main
-    ```
-7. `/site` を使って /.auth/me を確認したい場合は `Role Sync - Deploy Site` を実行し、SWA ドメインにアクセスしてロール割り当てを検証します。
+4. 検証したいワークフローを GitHub Web UI から手動実行します。トップバーの「Run workflow」から対象ブランチや入力値（必要な場合）を指定してください。
+5. /.auth/me の挙動を確認したい場合は `Role Sync - Deploy Site` を実行し、SWA ドメインでロールが反映されているか確認します。
+
+シークレット（`AZURE_*`、`AZURE_STATIC_WEB_APPS_API_TOKEN`、`ACTIONS_RELEASE_TOKEN`）は運用側で共有管理しているため、通常は追加・更新不要です。値を差し替える必要が生じた場合のみ、運用担当者と調整してください。
+
+## ワークフローの役割と利用方法
+
+| ワークフロー | 役割 | 主な手動入力 |
+| --- | --- | --- |
+| `Role Sync - Release` | `actions/role-sync` サブモジュールのリリース。新しい SemVer タグを作成し、GitHub Release を公開します。 | `version`: リリースしたい SemVer 文字列（例 `1.1.0-beta.0`）。`ACTIONS_RELEASE_TOKEN` の権限を確認してから実行してください。 |
+| `Discussion Cleanup - Release` | `actions/discussion-cleanup` サブモジュールのリリース。ロール同期リリースと同様にタグと GitHub Release を生成します。 | `version`: リリースしたい SemVer 文字列。`ACTIONS_RELEASE_TOKEN` が両リポジトリへ書き込めることを確認してください。 |
+| `Role Sync - Self Sync (Local Action)` | チェックアウト済みサブモジュールを使ってロール同期と招待 Discussion 整理をテストします。 | なし（既定値を使用）。必要に応じて `.github/workflows/role-sync-self-local.yml` の `env` を編集します。 |
+| `Role Sync - Self Sync (Released Package)` | 公開済み `nuitsjp/swa-github-role-sync@v1` の挙動を本番相当設定で検証します。 | なし。必要に応じて `SWA_NAME` などの環境変数を編集。 |
+| `Role Sync - Deploy Site` | `site/` の静的サイトを SWA にデプロイし、/.auth/me でロールを確認できるようにします。 | なし。 |
+| `Role Sync - Delete Discussions` | 招待 Discussion のまとめ削除。`cleanup-mode` により即時削除 (`immediate`) と期限チェック (`expiration`) を切り替えられます。 | `cleanup-mode`（任意、既定 `expiration`）; 必要に応じて `expiration-hours` などを Web UI で変更可能。 |
+
+定期実行・プルリク連動のワークフロー（`role-sync-npm-ci.yml` など）は基本的に手動操作を想定していません。挙動を確認したい場合は、該当ワークフローの「Run workflow」から対象ブランチを選び、必要に応じて入力値を与えて実行してください。
 
 ## 開発メモ
 
