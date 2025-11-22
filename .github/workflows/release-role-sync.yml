@@ -82,8 +82,9 @@ jobs:
         if: steps.meta.outputs.is_prerelease != 'true'
         working-directory: actions/role-sync
         run: |
-          git tag -f v1 "${{ steps.meta.outputs.tag }}"
-          git push https://x-access-token:$ACTIONS_RELEASE_TOKEN@github.com/nuitsjp/swa-github-role-sync.git v1 --force
+          major_version=$(echo "${{ steps.meta.outputs.tag }}" | cut -d. -f1)
+          git tag -f "$major_version" "${{ steps.meta.outputs.tag }}"
+          git push https://x-access-token:$ACTIONS_RELEASE_TOKEN@github.com/nuitsjp/swa-github-role-sync.git "$major_version" --force
 
       - name: Publish GitHub Release
         env:
