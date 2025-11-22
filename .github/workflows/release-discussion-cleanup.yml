@@ -1,4 +1,4 @@
-name: Discussion Cleanup - Release
+name: Release Discussion Cleanup
 
 on:
   workflow_dispatch:

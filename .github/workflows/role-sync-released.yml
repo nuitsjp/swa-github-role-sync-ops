@@ -1,4 +1,4 @@
-name: Role Sync (Released Package)
+name: Role Sync (Released)
 
 on:
   workflow_dispatch:
