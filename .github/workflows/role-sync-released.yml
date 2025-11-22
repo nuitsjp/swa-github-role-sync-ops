@@ -44,7 +44,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Sync SWA roles (released action)
-        uses: nuitsjp/swa-github-role-sync@v1
+        uses: nuitsjp/swa-github-role-sync@v1.0.3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           swa-name: ${{ env.SWA_NAME }}
