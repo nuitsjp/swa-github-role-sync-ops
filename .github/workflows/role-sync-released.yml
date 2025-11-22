@@ -27,7 +27,7 @@ jobs:
       - name: Cleanup expired discussions
         uses: ./actions/discussion-cleanup
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
 
   sync-swa-roles:
@@ -35,14 +35,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Checkout released action code
-        uses: actions/checkout@v4
-        with:
-          repository: nuitsjp/swa-github-role-sync
-          ref: v1.0.3
-          token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          path: released-role-sync
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -52,10 +44,9 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Sync SWA roles (released action)
-        run: node dist/sync.js
-        working-directory: released-role-sync
-        env:
-          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_SWA_NAME: ${{ env.SWA_NAME }}
-          INPUT_SWA_RESOURCE_GROUP: ${{ env.SWA_RG }}
-          INPUT_DISCUSSION_CATEGORY_NAME: ${{ env.DISCUSSION_CATEGORY }}
+        uses: nuitsjp/swa-github-role-sync@v1.0.3
+        with:
+          github-token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          swa-name: ${{ env.SWA_NAME }}
+          swa-resource-group: ${{ env.SWA_RG }}
+          discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
