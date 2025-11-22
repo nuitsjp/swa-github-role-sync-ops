@@ -40,7 +40,7 @@
 
 ## 提供する開発用ワークフロー
 
-- `role-sync-npm-ci.yml`：`actions/role-sync` のフォーマット、Lint、テスト、Rollup ビルド、ライセンスチェック、CodeQL、依存監査をまとめて実行します。
+- `npm-ci.yml`：`actions/role-sync` のフォーマット、Lint、テスト、Rollup ビルド、ライセンスチェック、CodeQL、依存監査をまとめて実行します。
 - `role-sync-release.yml`：手動トリガーで SemVer タグを作成し、[`nuitsjp/swa-github-role-sync`](https://github.com/nuitsjp/swa-github-role-sync) リポジトリにタグとリリースノートを公開します。
 - `role-sync-self-local.yml`：サブモジュール版の Action を直接呼び出し、ロール同期と招待 Discussion 掃除を検証するジョブです。
 - `role-sync-self-released.yml`：公開済み [`nuitsjp/swa-github-role-sync@v1`](https://github.com/nuitsjp/swa-github-role-sync/tree/v1) を使った検証ジョブ。ローカル版との差分テストに利用します。
@@ -83,7 +83,7 @@
 | `Role Sync - Deploy Site` | `site/` の静的サイトを SWA にデプロイし、/.auth/me でロールを確認できるようにします。 | なし。 |
 | `Role Sync - Delete Discussions` | 招待 Discussion のまとめ削除。`cleanup-mode` により即時削除 (`immediate`) と期限チェック (`expiration`) を切り替えられます。 | `cleanup-mode`（任意、既定 `expiration`）; 必要に応じて `expiration-hours` などを Web UI で変更可能。 |
 
-定期実行・プルリク連動のワークフロー（`role-sync-npm-ci.yml` など）は基本的に手動操作を想定していません。挙動を確認したい場合は、該当ワークフローの「Run workflow」から対象ブランチを選び、必要に応じて入力値を与えて実行してください。
+定期実行・プルリク連動のワークフロー（`npm-ci.yml` など）は基本的に手動操作を想定していません。挙動を確認したい場合は、該当ワークフローの「Run workflow」から対象ブランチを選び、必要に応じて入力値を与えて実行してください。
 
 ## 開発メモ
 
