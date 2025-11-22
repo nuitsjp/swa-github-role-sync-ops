@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'actions/role-sync'
-      - 'actions/role-sync/**'
+      - 'site'
+      - 'site/**'
       - '.github/workflows/role-sync-deploy-site.yml'
   workflow_dispatch:
 
@@ -41,11 +41,9 @@ jobs:
             echo "Failed to obtain deployment token" >&2
             exit 1
           fi
-          pushd actions/role-sync >/dev/null
           npx @azure/static-web-apps-cli@latest deploy \
             --deployment-token "$TOKEN" \
             --app-location site \
             --output-location site \
             --swa-config-location site \
             --env production
-          popd >/dev/null

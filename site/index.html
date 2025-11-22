@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SWA GitHub Role Sync Sample</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        margin: 0;
+        padding: 1.5rem;
+        background: #f7f7f9;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 1.5rem 1.75rem;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      }
+      h1 {
+        margin-top: 0;
+      }
+      pre {
+        background: #111827;
+        color: #e5e7eb;
+        padding: 0.75rem;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+      a.button {
+        display: inline-block;
+        padding: 0.55rem 0.9rem;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      a.secondary {
+        background: #6b7280;
+      }
+      .status {
+        padding: 0.75rem;
+        border-radius: 8px;
+        background: #eef2ff;
+        color: #312e81;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>SWA GitHub Role Sync Sample</h1>
+      <p>
+        Use the buttons below to sign in with GitHub, accept the invite, and
+        verify your assigned roles. The page calls <code>/.auth/me</code> to
+        show authenticated claims.
+      </p>
+
+      <div class="actions">
+        <a class="button" href="/.auth/login/github?post_login_redirect_uri=/"
+          >Sign in with GitHub</a
+        >
+        <a class="button secondary" href="/.auth/logout"
+          >Sign out / reset session</a
+        >
+        <a class="button" href="/.auth/me" target="_blank">Open /.auth/me</a>
+      </div>
+
+      <div id="status" class="status">Checking auth state...</div>
+      <pre id="me">(fetching /.auth/me...)</pre>
+    </main>
+
+    <script>
+      async function loadAuthState() {
+        const status = document.getElementById('status')
+        const me = document.getElementById('me')
+        status.textContent = 'Calling /.auth/me to detect login state...'
+        try {
+          const res = await fetch('/.auth/me')
+          if (!res.ok) {
+            status.textContent = `/.auth/me responded with ${res.status}. If you just accepted an invite, try signing in.`
+            me.textContent = await res.text()
+            return
+          }
+          const data = await res.json()
+          const principal = data?.clientPrincipal
+          if (!principal) {
+            status.textContent =
+              'Not signed in. Use "Sign in with GitHub" and retry.'
+            me.textContent = JSON.stringify(data, null, 2)
+            return
+          }
+          status.textContent = `Signed in as ${principal.userDetails}. Roles: ${principal.userRoles?.join(', ')}`
+          me.textContent = JSON.stringify(data, null, 2)
+        } catch (error) {
+          status.textContent =
+            'Failed to call /.auth/me. See console for details.'
+          me.textContent = String(error)
+          console.error(error)
+        }
+      }
+
+      loadAuthState()
+    </script>
+  </body>
+</html>
