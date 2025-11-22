@@ -9,6 +9,7 @@ permissions:
   id-token: write
   contents: read
   discussions: write
+  metadata: read
 
 env:
   SWA_NAME: stapp-swa-github-workflows-prod
