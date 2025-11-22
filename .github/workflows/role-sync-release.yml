@@ -21,6 +21,11 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Reset checkout credentials
+        run: git config --global --unset-all http.https://github.com/.extraheader || true
+        env:
+          ACTIONS_RELEASE_TOKEN: ${{ env.ACTIONS_RELEASE_TOKEN }}
+
       - name: Ensure release token
         run: |
           if [ -z "$ACTIONS_RELEASE_TOKEN" ]; then
