@@ -44,7 +44,7 @@
 - `role-sync-release.yml`：手動トリガーで SemVer タグを作成し、[`nuitsjp/swa-github-role-sync`](https://github.com/nuitsjp/swa-github-role-sync) リポジトリにタグとリリースノートを公開します。
 - `role-sync-self-local.yml`：サブモジュール版の Action を直接呼び出し、ロール同期と招待 Discussion 掃除を検証するジョブです。
 - `role-sync-self-released.yml`：公開済み [`nuitsjp/swa-github-role-sync@v1`](https://github.com/nuitsjp/swa-github-role-sync/tree/v1) を使った検証ジョブ。ローカル版との差分テストに利用します。
-- `role-sync-deploy-site.yml`：`site/` を SWA にデプロイし、/.auth/me でロール割り当てを確認するためのサイトを公開します。
+- `deploy-site.yml`：`site/` を SWA にデプロイし、/.auth/me でロール割り当てを確認するためのサイトを公開します。
 - `delete-discussions.yml`：開発中に残った招待 Discussion を手動／一括で削除するためのワークフローです。
 
 ## 同梱アクション
