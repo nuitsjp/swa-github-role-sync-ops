@@ -48,12 +48,6 @@
 #### CLI で行えること／行えないこと
 
 - GitHub App 自体の新規作成と Private key のダウンロードは現在ブラウザ UI でのみ提供されています（CLI/API では未サポート）。Step 1〜5 は Web UI で実施してください。
-- （参考）既存 App/Installation の ID を確認したい場合は、個人アクセストークンや `gh auth login` 済みアカウントで以下のように取得できます。workflow では Installation ID を直接指定しないため、調査用途のみです。
-
-  ```powershell
-  # ログインしているアカウントに紐づく GitHub App (Owner) と Installation ID 一覧
-  gh api user/installations --jq '.installations[] | {id, account: .account.login, repositories: .repository_selection}'
-  ```
 
 - Secrets 登録は CLI で実行可能です。リポジトリ単位の場合:
 
