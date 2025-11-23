@@ -28,7 +28,6 @@ jobs:
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.ROLE_SYNC_APP_ID }}
-          installation-id: ${{ secrets.ROLE_SYNC_APP_INSTALLATION_ID }}
           private-key: ${{ secrets.ROLE_SYNC_APP_PRIVATE_KEY }}
 
       - name: Cleanup expired discussions
@@ -50,7 +49,6 @@ jobs:
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.ROLE_SYNC_APP_ID }}
-          installation-id: ${{ secrets.ROLE_SYNC_APP_INSTALLATION_ID }}
           private-key: ${{ secrets.ROLE_SYNC_APP_PRIVATE_KEY }}
 
       - name: Azure login (OIDC)

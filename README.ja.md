@@ -30,7 +30,7 @@
   - `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID`: OIDC で `azure/login` を実行するサービス プリンシパル用。
   - `AZURE_STATIC_WEB_APPS_API_TOKEN`: `Azure/static-web-apps-deploy@v1` でサイトをデプロイするためのトークン。
 - `ACTIONS_RELEASE_TOKEN`: `repo`・`discussions`・`read:org` を付与した PAT。主にサブリポジトリのリリース自動化で利用します（role-sync 系 workflow では GitHub App に切り替え済み）。
-- `ROLE_SYNC_APP_ID` / `ROLE_SYNC_APP_INSTALLATION_ID` / `ROLE_SYNC_APP_PRIVATE_KEY`: ローカルの role sync job が GitHub App トークンを生成するための値です。後述の手順でアプリを作成し、Secrets に保存してください。
+- `ROLE_SYNC_APP_ID` / `ROLE_SYNC_APP_PRIVATE_KEY`: ローカルの role sync job が GitHub App トークンを生成するために必要です。後述の手順でアプリを作成し、Secrets に保存してください。
 - すべての workflow が動作できるよう、`Settings > Actions > General` で `discussions: write`・`id-token: write`・`contents: read` を許可しておきます。
 
 ### GitHub App の作成手順
@@ -40,17 +40,15 @@
 3. **Repository permissions** で `Administration (Read-only)` と `Discussions (Read & write)` を付与します。Organization メンバー情報が必要な場合は **Organization permissions** で `Members (Read-only)` も許可してください。
 4. 対象 Organization / リポジトリにアプリをインストールします。
 5. App 設定画面で `App ID` を控え、`Generate a private key` から取得した `.pem` を保存します。
-6. `Install App` 画面や API を用いて、対象リポジトリの **Installation ID** を確認します（インストール URL の末尾に記載されています）。
-7. 取得した 3 つの値を GitHub Secrets に登録します。
+6. 取得した App ID と Private key を GitHub Secrets に登録します。
    - `ROLE_SYNC_APP_ID`: GitHub App ID
-   - `ROLE_SYNC_APP_INSTALLATION_ID`: Installation ID
    - `ROLE_SYNC_APP_PRIVATE_KEY`: Private key (`.pem` の中身。改行込み)
-8. 以上で `role-sync-local.yml` と `role-sync-released.yml` が `actions/create-github-app-token@v1` を使ってコラボレータ情報や Discussion API へアクセスできるようになります。
+7. 以上で `role-sync-local.yml` と `role-sync-released.yml` が `actions/create-github-app-token@v1` を使ってコラボレータ情報や Discussion API へアクセスできるようになります。
 
 #### CLI で行えること／行えないこと
 
 - GitHub App 自体の新規作成と Private key のダウンロードは現在ブラウザ UI でのみ提供されています（CLI/API では未サポート）。Step 1〜5 は Web UI で実施してください。
-- 既存 App/Installation の ID を確認したい場合は、個人アクセストークンや `gh auth login` 済みアカウントで以下のように取得できます。
+- （参考）既存 App/Installation の ID を確認したい場合は、個人アクセストークンや `gh auth login` 済みアカウントで以下のように取得できます。workflow では Installation ID を直接指定しないため、調査用途のみです。
 
   ```powershell
   # ログインしているアカウントに紐づく GitHub App (Owner) と Installation ID 一覧
@@ -61,7 +59,6 @@
 
   ```powershell
   gh secret set ROLE_SYNC_APP_ID --body "123456"
-  gh secret set ROLE_SYNC_APP_INSTALLATION_ID --body "99999999"
   gh secret set ROLE_SYNC_APP_PRIVATE_KEY < role-sync-app.private-key.pem
   ```
 
