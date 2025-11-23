@@ -111,6 +111,10 @@
 
 定期実行・プルリク連動のワークフロー（`npm-ci.yml` など）は基本的に手動操作を想定していません。挙動を確認したい場合は、該当ワークフローの「Run workflow」から対象ブランチを選び、必要に応じて入力値を与えて実行してください。
 
+### リリース運用ドキュメント
+
+GitHub Marketplace 公開やメジャー／マイナー運用の詳細は `docs/release-guide.md` を参照してください。サブモジュールへのタグ作成と GitHub Release の作成は本リポジトリの `Release Role Sync` / `Release Discussion Cleanup` ワークフローが自動で行い、結果は Actions のジョブサマリーに表示されます。
+
 ## 開発メモ
 
 - 定期運用にはリリース済み Action を利用する一方で、`role-sync-self-local.yml` で未リリースの変更を事前検証できます。

@@ -101,6 +101,23 @@ jobs:
           git tag -f "$major_version" "${{ steps.meta.outputs.tag }}"
           git push https://x-access-token:$ACTIONS_RELEASE_TOKEN@github.com/nuitsjp/swa-github-role-sync.git "$major_version" --force
 
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ env.ACTIONS_RELEASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          prerelease_flag=()
+          if [[ "${{ steps.meta.outputs.is_prerelease }}" == "true" ]]; then
+            prerelease_flag+=(--prerelease)
+          fi
+          gh release create "${{ steps.meta.outputs.tag }}" \
+            --repo nuitsjp/swa-github-role-sync \
+            --title "${{ steps.meta.outputs.tag }}" \
+            --notes "Automated release for ${{ steps.meta.outputs.tag }}" \
+            "${prerelease_flag[@]}"
+          release_url=$(gh release view "${{ steps.meta.outputs.tag }}" --repo nuitsjp/swa-github-role-sync --json url --jq .url)
+          echo "release_url=$release_url" >> "$GITHUB_ENV"
+
       - name: Publish release summary
         run: |
           {
@@ -108,4 +125,5 @@ jobs:
             echo ""
             echo "- Repository: [nuitsjp/swa-github-role-sync](https://github.com/nuitsjp/swa-github-role-sync)"
             echo "- Tag: ${{ steps.meta.outputs.tag }}"
+            echo "- Release: ${release_url:-"(creation failed)"}"
           } >> "$GITHUB_STEP_SUMMARY"
