@@ -13,7 +13,7 @@ permissions:
   discussions: write
 
 env:
-  DISCUSSION_CATEGORY: Announcements
+  DISCUSSION_CATEGORY: Invitation
 
 jobs:
   purge:

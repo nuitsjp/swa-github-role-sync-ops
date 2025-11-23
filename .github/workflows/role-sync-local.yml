@@ -13,7 +13,7 @@ permissions:
 env:
   SWA_NAME: stapp-swa-github-workflows-prod
   SWA_RG: rg-swa-github-workflows-prod
-  DISCUSSION_CATEGORY: Announcements
+  DISCUSSION_CATEGORY: Invitation
 
 jobs:
   cleanup:

@@ -25,7 +25,7 @@
 
 ### GitHub
 
-- Discussion を利用するリポジトリで、招待通知用のカテゴリー（例: `Announcements`）を作成しておいてください。
+- Discussion を利用するリポジトリで、招待通知用のカテゴリー（名前: `Invitation`）を作成しておいてください。
 - 以下のシークレットを Organization もしくはリポジトリに登録します。
   - `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID`: OIDC で `azure/login` を実行するサービス プリンシパル用。
   - `AZURE_STATIC_WEB_APPS_API_TOKEN`: `Azure/static-web-apps-deploy@v1` でサイトをデプロイするためのトークン。
