@@ -9,7 +9,6 @@ permissions:
   id-token: write
   contents: read
   discussions: write
-  members: read
 
 env:
   SWA_NAME: stapp-swa-github-workflows-prod
@@ -48,7 +47,7 @@ jobs:
       - name: Sync SWA roles
         uses: ./actions/role-sync
         with:
-          github-token: ${{ secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.ROLE_SYNC_REPO_TOKEN || secrets.ACTIONS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           swa-name: ${{ env.SWA_NAME }}
           swa-resource-group: ${{ env.SWA_RG }}
           discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
