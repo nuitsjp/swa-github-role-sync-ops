@@ -27,7 +27,7 @@ jobs:
           private-key: ${{ secrets.ROLE_SYNC_APP_PRIVATE_KEY }}
 
       - name: Cleanup expired discussions
-        uses: nuitsjp/swa-github-discussion-cleanup@v1.0.3
+        uses: nuitsjp/swa-github-discussion-cleanup@v1
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           discussion-category-name: ${{ env.DISCUSSION_CATEGORY }}
@@ -51,7 +51,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Sync SWA roles
-        uses: nuitsjp/swa-github-role-sync@v1.0.4
+        uses: nuitsjp/swa-github-role-sync@v1
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           swa-name: ${{ env.SWA_NAME }}
