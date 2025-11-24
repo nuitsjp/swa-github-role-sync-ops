@@ -1,0 +1,21 @@
+{
+  "name": "swa-github-workflows",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Monorepo harness for swa-github-role-sync and swa-github-discussion-cleanup",
+  "workspaces": [
+    "actions/role-sync",
+    "actions/discussion-cleanup"
+  ],
+  "scripts": {
+    "format:write": "npm run format:write --workspace actions/role-sync && npm run format:write --workspace actions/discussion-cleanup",
+    "format:check": "npm run format:check --workspace actions/role-sync && npm run format:check --workspace actions/discussion-cleanup",
+    "lint": "npm run lint --workspace actions/role-sync",
+    "test": "npm run ci-test --workspace actions/role-sync",
+    "package": "npm run package --workspace actions/role-sync && npm run package --workspace actions/discussion-cleanup",
+    "verify:role-sync": "npm run verify --workspace actions/role-sync",
+    "verify:discussion-cleanup": "npm run package --workspace actions/discussion-cleanup",
+    "verify": "npm run verify:role-sync && npm run verify:discussion-cleanup"
+  }
+}

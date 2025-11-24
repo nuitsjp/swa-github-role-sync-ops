@@ -7,12 +7,16 @@ on:
     paths:
       - 'actions/role-sync'
       - 'actions/role-sync/**'
+      - 'actions/discussion-cleanup'
+      - 'actions/discussion-cleanup/**'
   push:
     branches:
       - main
     paths:
       - 'actions/role-sync'
       - 'actions/role-sync/**'
+      - 'actions/discussion-cleanup'
+      - 'actions/discussion-cleanup/**'
   schedule:
     - cron: '31 7 * * 3'
   workflow_dispatch:
@@ -22,16 +26,39 @@ permissions:
   security-events: write
 
 env:
-  NODE_VERSION_FILE: actions/role-sync/.node-version
+  ROLE_SYNC_NODE_VERSION_FILE: actions/role-sync/.node-version
+  DISCUSSION_CLEANUP_NODE_VERSION_FILE: actions/discussion-cleanup/.node-version
 
 jobs:
-  lint:
-    name: Format & Lint
+  verify:
+    name: Verify (${{ matrix.display_name }})
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: &projects
+        include:
+          - id: role-sync
+            display_name: Role Sync
+            workdir: actions/role-sync
+            node_version_file: actions/role-sync/.node-version
+            format_script: format:check
+            lint_script: lint
+            test_script: ci-test
+            package_script: package
+            dist_path: dist
+          - id: discussion-cleanup
+            display_name: Discussion Cleanup
+            workdir: actions/discussion-cleanup
+            node_version_file: actions/discussion-cleanup/.node-version
+            format_script: format:check
+            lint_script: ''
+            test_script: ''
+            package_script: package
+            dist_path: dist
     defaults:
       run:
-        working-directory: actions/role-sync
+        working-directory: ${{ matrix.workdir }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,81 +67,38 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version-file: ${{ matrix.node_version_file }}
           cache: npm
-          cache-dependency-path: actions/role-sync/package-lock.json
+          cache-dependency-path: ${{ matrix.workdir }}/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Check Format
-        run: npm run format:check
+      - name: Format Check
+        run: npm run ${{ matrix.format_script }}
 
       - name: ESLint
-        run: npm run lint
-
-  test:
-    name: Tests
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: actions/role-sync
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
-          cache: npm
-          cache-dependency-path: actions/role-sync/package-lock.json
-
-      - name: Install Dependencies
-        run: npm ci
+        if: ${{ matrix.lint_script != '' }}
+        run: npm run ${{ matrix.lint_script }}
 
       - name: Run Tests
-        run: npm run ci-test
+        if: ${{ matrix.test_script != '' }}
+        run: npm run ${{ matrix.test_script }}
 
-  bundle:
-    name: Bundle & Check dist
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
-    needs: lint
-    defaults:
-      run:
-        working-directory: actions/role-sync
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
-          cache: npm
-          cache-dependency-path: actions/role-sync/package-lock.json
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Bundle (format + Rollup)
-        run: npm run bundle
+      - name: Bundle
+        run: npm run ${{ matrix.package_script }}
 
       - name: Compare dist/
         id: diff
         run: |
-          if [ ! -d dist/ ]; then
-            echo "Expected dist/ directory does not exist.  See status below:"
+          if [ ! -d "${{ matrix.dist_path }}" ]; then
+            echo "Expected ${{ matrix.dist_path }} directory does not exist.  See status below:"
             ls -la ./
             exit 1
           fi
-          if [ "$(git diff --ignore-space-at-eol --text dist/ | wc -l)" -gt "0" ]; then
+          if [ "$(git diff --ignore-space-at-eol --text ${{ matrix.dist_path }} | wc -l)" -gt "0" ]; then
             echo "Detected uncommitted changes after build. See status below:"
-            git diff --ignore-space-at-eol --text dist/
+            git diff --ignore-space-at-eol --text ${{ matrix.dist_path }}
             exit 1
           fi
 
@@ -122,15 +106,18 @@ jobs:
         name: Upload Artifact
         uses: actions/upload-artifact@v5
         with:
-          name: dist
-          path: actions/role-sync/dist/
+          name: ${{ matrix.id }}-dist
+          path: ${{ matrix.workdir }}/dist/
 
   dependency-audit:
-    name: Dependency Audit
+    name: Dependency Audit (${{ matrix.display_name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: *projects
     defaults:
       run:
-        working-directory: actions/role-sync
+        working-directory: ${{ matrix.workdir }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -139,9 +126,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version-file: ${{ matrix.node_version_file }}
           cache: npm
-          cache-dependency-path: actions/role-sync/package-lock.json
+          cache-dependency-path: ${{ matrix.workdir }}/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
@@ -165,7 +152,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version-file: ${{ env.ROLE_SYNC_NODE_VERSION_FILE }}
           cache: npm
           cache-dependency-path: actions/role-sync/package-lock.json
 
@@ -203,7 +190,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version-file: ${{ env.ROLE_SYNC_NODE_VERSION_FILE }}
           cache: npm
           cache-dependency-path: actions/role-sync/package-lock.json
 
