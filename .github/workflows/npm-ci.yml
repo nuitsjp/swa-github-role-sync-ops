@@ -9,6 +9,7 @@ on:
       - 'actions/role-sync/**'
       - 'actions/discussion-cleanup'
       - 'actions/discussion-cleanup/**'
+      # Ensure workflow edits also validate the pipeline
       - '.github/workflows/npm-ci.yml'
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - 'actions/role-sync/**'
       - 'actions/discussion-cleanup'
       - 'actions/discussion-cleanup/**'
+      # Ensure workflow edits also validate the pipeline
       - '.github/workflows/npm-ci.yml'
   schedule:
     - cron: '31 7 * * 3'
