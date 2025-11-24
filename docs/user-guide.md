@@ -1,9 +1,10 @@
 # ユーザーガイド
 
-Azure Static Web Apps (SWA) のロール同期と招待 Discussion 掃除を GitHub Actions で行うための手順を、CLI ベースでまとめました。ワークフロー例は必要最低限の入力だけを指定しています。テンプレートやロール名を変える場合は「追加設定」を参照してください。
+Azure Static Web Apps (SWA) のロール同期と招待 Discussion 掃除を GitHub Actions で行うための手順をまとめました。ワークフロー例は必要最低限の入力だけを指定しています。テンプレートやロール名を変える場合は「追加設定」を参照してください。
 
 ## 前提条件
 
+- **Windows の場合は WSL (Windows Subsystem for Linux) を使用すること。** セットアップスクリプトは Bash で記述されています。
 - Azure CLI (`az`) と GitHub CLI (`gh`) がインストール済みで、ログイン済みであること。
 - 対象リポジトリで Discussions を有効化し、招待通知を投稿するカテゴリーを用意しておく（例: `Announcements`）。
 - GitHub App を作成済み（`Administration: read`, `Discussions: read & write`、必要に応じて `Members: read`）。App ID と private key を控えておく。
@@ -12,6 +13,59 @@ Azure Static Web Apps (SWA) のロール同期と招待 Discussion 掃除を Git
 ## Azure リソースの作成
 
 ロール同期に必要な Azure リソース（リソースグループ、Static Web App、マネージド ID）を作成し、GitHub Actions から OIDC でログインできるよう設定します。
+
+### セットアップスクリプトによる一括作成
+
+以下のコマンドで、必要なリソースをすべて一括で作成できます。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nuitsjp/swa-github-role-sync-ops/main/scripts/setup-azure-resources.sh | bash -s -- <owner> <repository>
+```
+
+**例:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nuitsjp/swa-github-role-sync-ops/main/scripts/setup-azure-resources.sh | bash -s -- nuitsjp swa-github-role-sync-ops
+```
+
+**実行結果:**
+
+```
+=== Azure Resource Setup for swa-github-role-sync-ops ===
+Resource Group: rg-swa-github-role-sync-ops-prod
+Static Web App: stapp-swa-github-role-sync-ops-prod
+Managed Identity: id-swa-github-role-sync-ops-prod
+GitHub Repo: nuitsjp/swa-github-role-sync-ops
+
+[1/6] Creating Resource Group...
+  Created: rg-swa-github-role-sync-ops-prod
+[2/6] Creating Static Web App...
+  Created: stapp-swa-github-role-sync-ops-prod
+  Hostname: white-pond-06cee3400.3.azurestaticapps.net
+[3/6] Creating Managed Identity...
+  Created: id-swa-github-role-sync-ops-prod
+  Client ID: a58912f6-5e94-4cf7-a68f-84a8f8537781
+[4/6] Creating Federated Credential...
+  Created: fc-github-actions-main
+[5/6] Assigning RBAC role...
+  Assigned Contributor role to id-swa-github-role-sync-ops-prod
+[6/6] Registering GitHub Secrets...
+  AZURE_CLIENT_ID: a58912f6-5e94-4cf7-a68f-84a8f8537781
+  AZURE_TENANT_ID: fe689afa-3572-4db9-8e8a-0f81d5a9d253
+  AZURE_SUBSCRIPTION_ID: fc7753ed-2e69-4202-bb66-86ff5798b8d5
+
+=== Setup Complete ===
+SWA URL: https://white-pond-06cee3400.3.azurestaticapps.net
+```
+
+スクリプトは以下を自動で実行します:
+
+1. リソースグループの作成 (`rg-<repository>-prod`)
+2. Static Web App の作成 (`stapp-<repository>-prod`, Standard SKU)
+3. マネージド ID の作成 (`id-<repository>-prod`)
+4. OIDC フェデレーション資格情報の作成
+5. Contributor ロールの割り当て
+6. GitHub Secrets の登録 (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`)
 
 ### リソース命名規則
 
@@ -23,178 +77,11 @@ Azure Cloud Adoption Framework の[リソース省略形ガイダンス](https:/
 | Static Web App | `stapp` | `stapp-swa-github-role-sync-ops-prod` |
 | マネージド ID | `id` | `id-swa-github-role-sync-ops-prod` |
 
-### 1. リソースグループの作成
+### GitHub App 用の Secrets 登録
 
-```powershell
-az group create --name rg-swa-github-role-sync-ops-prod --location japaneast
-```
+GitHub App 用の Secrets は手動で登録してください:
 
-出力例:
-
-```json
-{
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-swa-github-role-sync-ops-prod",
-  "location": "japaneast",
-  "name": "rg-swa-github-role-sync-ops-prod",
-  "properties": {
-    "provisioningState": "Succeeded"
-  }
-}
-```
-
-### 2. Static Web App の作成
-
-ロール同期機能を使用するには **Standard** SKU 以上が必要です。また、Static Web App は利用可能なリージョンが限られているため、`eastasia` などを指定します。
-
-```powershell
-az staticwebapp create `
-  --name stapp-swa-github-role-sync-ops-prod `
-  --resource-group rg-swa-github-role-sync-ops-prod `
-  --location eastasia `
-  --sku Standard
-```
-
-出力例:
-
-```json
-{
-  "defaultHostname": "white-sea-0b4ae8400.3.azurestaticapps.net",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-swa-github-role-sync-ops-prod/providers/Microsoft.Web/staticSites/stapp-swa-github-role-sync-ops-prod",
-  "location": "East Asia",
-  "name": "stapp-swa-github-role-sync-ops-prod",
-  "sku": {
-    "name": "Standard",
-    "tier": "Standard"
-  }
-}
-```
-
-`defaultHostname` が SWA の URL です。後でカスタムドメインを設定することも可能です。
-
-### 3. マネージド ID の作成
-
-GitHub Actions から OIDC 認証で Azure にアクセスするためのユーザー割り当てマネージド ID を作成します。
-
-```powershell
-az identity create `
-  --name id-swa-github-role-sync-ops-prod `
-  --resource-group rg-swa-github-role-sync-ops-prod `
-  --location japaneast
-```
-
-出力例:
-
-```json
-{
-  "clientId": "89020403-e965-44d0-855c-0e617397312c",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/rg-swa-github-role-sync-ops-prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-swa-github-role-sync-ops-prod",
-  "principalId": "29a88270-120d-4760-99f1-30dbcd08c578",
-  "tenantId": "fe689afa-3572-4db9-8e8a-0f81d5a9d253"
-}
-```
-
-以下の値を控えておきます（後で GitHub Secrets に登録）:
-
-- `clientId` → `AZURE_CLIENT_ID`
-- `tenantId` → `AZURE_TENANT_ID`
-
-サブスクリプション ID は以下で取得できます:
-
-```powershell
-az account show --query id --output tsv
-```
-
-### 4. OIDC フェデレーション資格情報の作成
-
-GitHub Actions がマネージド ID としてログインできるよう、フェデレーション資格情報を作成します。`subject` の `{owner}/{repo}` は対象リポジトリに置き換えてください。
-
-```powershell
-az identity federated-credential create `
-  --name fc-github-actions-main `
-  --identity-name id-swa-github-role-sync-ops-prod `
-  --resource-group rg-swa-github-role-sync-ops-prod `
-  --issuer https://token.actions.githubusercontent.com `
-  --subject repo:nuitsjp/swa-github-role-sync-ops:ref:refs/heads/main `
-  --audiences api://AzureADTokenExchange
-```
-
-出力例:
-
-```json
-{
-  "audiences": ["api://AzureADTokenExchange"],
-  "issuer": "https://token.actions.githubusercontent.com",
-  "name": "fc-github-actions-main",
-  "subject": "repo:nuitsjp/swa-github-role-sync-ops:ref:refs/heads/main"
-}
-```
-
-> **Note**: `subject` の形式は以下のパターンが利用可能です:
-> - 特定ブランチ: `repo:{owner}/{repo}:ref:refs/heads/{branch}`
-> - 特定タグ: `repo:{owner}/{repo}:ref:refs/tags/{tag}`
-> - 特定環境: `repo:{owner}/{repo}:environment:{environment}`
-> - Pull Request: `repo:{owner}/{repo}:pull_request`
-
-### 5. RBAC 権限の付与
-
-マネージド ID に Static Web App への **共同作成者 (Contributor)** 権限を付与します。ロール割り当ての操作に必要です。
-
-```powershell
-# マネージド ID の principalId を取得
-$principalId = az identity show `
-  --name id-swa-github-role-sync-ops-prod `
-  --resource-group rg-swa-github-role-sync-ops-prod `
-  --query principalId --output tsv
-
-# Static Web App のリソース ID を取得
-$swaId = az staticwebapp show `
-  --name stapp-swa-github-role-sync-ops-prod `
-  --resource-group rg-swa-github-role-sync-ops-prod `
-  --query id --output tsv
-
-# ロール割り当てを作成
-az role assignment create `
-  --assignee-object-id $principalId `
-  --assignee-principal-type ServicePrincipal `
-  --role "Contributor" `
-  --scope $swaId
-```
-
-出力例:
-
-```json
-{
-  "principalId": "29a88270-120d-4760-99f1-30dbcd08c578",
-  "principalType": "ServicePrincipal",
-  "roleDefinitionId": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
-  "scope": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-swa-github-role-sync-ops-prod/providers/Microsoft.Web/staticSites/stapp-swa-github-role-sync-ops-prod"
-}
-```
-
-### 6. GitHub Secrets の登録
-
-Azure OIDC に必要な 3 つの値を GitHub Secrets に登録します。
-
-```powershell
-# マネージド ID の clientId を取得して登録
-$clientId = az identity show `
-  --name id-swa-github-role-sync-ops-prod `
-  --resource-group rg-swa-github-role-sync-ops-prod `
-  --query clientId --output tsv
-gh secret set AZURE_CLIENT_ID --body $clientId
-
-# テナント ID を取得して登録
-$tenantId = az account show --query tenantId --output tsv
-gh secret set AZURE_TENANT_ID --body $tenantId
-
-# サブスクリプション ID を取得して登録
-$subscriptionId = az account show --query id --output tsv
-gh secret set AZURE_SUBSCRIPTION_ID --body $subscriptionId
-```
-
-GitHub App 用の Secrets も登録します:
-
-```powershell
+```bash
 gh secret set ROLE_SYNC_APP_ID --body "123456"
 gh secret set ROLE_SYNC_APP_PRIVATE_KEY < role-sync-app.private-key.pem
 ```
@@ -246,7 +133,7 @@ jobs:
 
 CLI で手動実行する場合:
 
-```powershell
+```bash
 gh workflow run role-sync.yml --ref main
 gh run watch --exit-status
 ```
@@ -278,7 +165,7 @@ jobs:
 
 CLI で手動実行する場合:
 
-```powershell
+```bash
 gh workflow run cleanup-invite-discussions.yml --ref main
 gh run watch --exit-status
 ```
