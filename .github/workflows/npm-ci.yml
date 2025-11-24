@@ -28,6 +28,7 @@ permissions:
 env:
   ROLE_SYNC_NODE_VERSION_FILE: actions/role-sync/.node-version
   DISCUSSION_CLEANUP_NODE_VERSION_FILE: actions/discussion-cleanup/.node-version
+  NPM_CONFIG_PACKAGE_LOCK: true
 
 jobs:
   verify:
