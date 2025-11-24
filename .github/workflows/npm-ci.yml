@@ -188,6 +188,9 @@ jobs:
       - name: Install Dependencies
         run: npm --prefix 'actions/role-sync' ci
 
+      - name: Disable workspace root
+        run: mv package.json package.json.workspace
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -226,3 +229,10 @@ jobs:
       - name: Check Licenses
         working-directory: actions/role-sync
         run: licensed status
+
+      - name: Restore workspace root
+        if: ${{ always() }}
+        run: |
+          if [ -f package.json.workspace ]; then
+            mv package.json.workspace package.json
+          fi
