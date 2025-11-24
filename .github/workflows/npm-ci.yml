@@ -9,6 +9,7 @@ on:
       - 'actions/role-sync/**'
       - 'actions/discussion-cleanup'
       - 'actions/discussion-cleanup/**'
+      - '.github/workflows/npm-ci.yml'
   push:
     branches:
       - main
@@ -17,6 +18,7 @@ on:
       - 'actions/role-sync/**'
       - 'actions/discussion-cleanup'
       - 'actions/discussion-cleanup/**'
+      - '.github/workflows/npm-ci.yml'
   schedule:
     - cron: '31 7 * * 3'
   workflow_dispatch:
