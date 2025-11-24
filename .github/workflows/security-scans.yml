@@ -1,6 +1,20 @@
 name: Security Scans
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'actions/role-sync/src/**'
+      - 'actions/discussion-cleanup/src/**'
+      - '.github/workflows/security-scans.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'actions/role-sync/src/**'
+      - 'actions/discussion-cleanup/src/**'
+      - '.github/workflows/security-scans.yml'
   schedule:
     - cron: '31 7 * * 3'
   workflow_dispatch:
@@ -52,6 +66,7 @@ jobs:
         uses: github/codeql-action/analyze@v4
 
   licensed:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     name: Check Licenses
     runs-on: ubuntu-latest
     permissions:
