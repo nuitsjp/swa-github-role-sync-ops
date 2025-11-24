@@ -69,44 +69,33 @@ jobs:
           cache-dependency-path: ${{ matrix.workdir }}/package-lock.json
 
       - name: Install Dependencies
-        run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          npm ci
+        run: npm --prefix '${{ matrix.workdir }}' ci
 
       - name: Format Check
-        run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          npm run ${{ matrix.format_script }}
+        run: npm --prefix '${{ matrix.workdir }}' run ${{ matrix.format_script }}
 
       - name: ESLint
         if: ${{ matrix.lint_script != '' }}
-        run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          npm run ${{ matrix.lint_script }}
+        run: npm --prefix '${{ matrix.workdir }}' run ${{ matrix.lint_script }}
 
       - name: Run Tests
         if: ${{ matrix.test_script != '' }}
-        run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          npm run ${{ matrix.test_script }}
+        run: npm --prefix '${{ matrix.workdir }}' run ${{ matrix.test_script }}
 
       - name: Bundle
-        run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          npm run ${{ matrix.package_script }}
+        run: npm --prefix '${{ matrix.workdir }}' run ${{ matrix.package_script }}
 
       - name: Compare dist/
         id: diff
         run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          if [ ! -d "${{ matrix.dist_path }}" ]; then
+          if [ ! -d "${{ matrix.workdir }}/${{ matrix.dist_path }}" ]; then
             echo "Expected ${{ matrix.dist_path }} directory does not exist.  See status below:"
-            ls -la ./
+            ls -la "${{ matrix.workdir }}/"
             exit 1
           fi
-          if [ "$(git diff --ignore-space-at-eol --text ${{ matrix.dist_path }} | wc -l)" -gt "0" ]; then
+          if [ "$(git -C '${{ matrix.workdir }}' diff --ignore-space-at-eol --text ${{ matrix.dist_path }} | wc -l)" -gt "0" ]; then
             echo "Detected uncommitted changes after build. See status below:"
-            git diff --ignore-space-at-eol --text ${{ matrix.dist_path }}
+            git -C '${{ matrix.workdir }}' diff --ignore-space-at-eol --text ${{ matrix.dist_path }}
             exit 1
           fi
 
@@ -139,14 +128,10 @@ jobs:
           cache-dependency-path: ${{ matrix.workdir }}/package-lock.json
 
       - name: Install Dependencies
-        run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          npm ci
+        run: npm --prefix '${{ matrix.workdir }}' ci
 
       - name: npm audit (production, high+)
-        run: |
-          cd '${{ github.workspace }}/${{ matrix.workdir }}'
-          npm audit --omit=dev --audit-level=high
+        run: npm --prefix '${{ matrix.workdir }}' audit --omit=dev --audit-level=high
 
   analyze:
     name: CodeQL Analyze
