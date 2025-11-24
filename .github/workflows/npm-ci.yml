@@ -69,31 +69,36 @@ jobs:
           cache-dependency-path: ${{ matrix.workdir }}/package-lock.json
 
       - name: Install Dependencies
-        working-directory: ${{ matrix.workdir }}
-        run: npm ci
+        run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
+          npm ci
 
       - name: Format Check
-        working-directory: ${{ matrix.workdir }}
-        run: npm run ${{ matrix.format_script }}
+        run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
+          npm run ${{ matrix.format_script }}
 
       - name: ESLint
         if: ${{ matrix.lint_script != '' }}
-        working-directory: ${{ matrix.workdir }}
-        run: npm run ${{ matrix.lint_script }}
+        run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
+          npm run ${{ matrix.lint_script }}
 
       - name: Run Tests
         if: ${{ matrix.test_script != '' }}
-        working-directory: ${{ matrix.workdir }}
-        run: npm run ${{ matrix.test_script }}
+        run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
+          npm run ${{ matrix.test_script }}
 
       - name: Bundle
-        working-directory: ${{ matrix.workdir }}
-        run: npm run ${{ matrix.package_script }}
+        run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
+          npm run ${{ matrix.package_script }}
 
       - name: Compare dist/
         id: diff
-        working-directory: ${{ matrix.workdir }}
         run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
           if [ ! -d "${{ matrix.dist_path }}" ]; then
             echo "Expected ${{ matrix.dist_path }} directory does not exist.  See status below:"
             ls -la ./
@@ -134,12 +139,14 @@ jobs:
           cache-dependency-path: ${{ matrix.workdir }}/package-lock.json
 
       - name: Install Dependencies
-        working-directory: ${{ matrix.workdir }}
-        run: npm ci
+        run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
+          npm ci
 
       - name: npm audit (production, high+)
-        working-directory: ${{ matrix.workdir }}
-        run: npm audit --omit=dev --audit-level=high
+        run: |
+          cd '${{ github.workspace }}/${{ matrix.workdir }}'
+          npm audit --omit=dev --audit-level=high
 
   analyze:
     name: CodeQL Analyze
