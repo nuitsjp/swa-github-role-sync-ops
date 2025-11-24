@@ -206,7 +206,7 @@ jobs:
         working-directory: actions/role-sync
         run: licensed cache
 
-      - if: ${{ github.event_name == 'workflow_dispatch' }}
+      - if: ${{ github.event_name == 'workflow_dispatch' && secrets.ROLE_SYNC_REPO_TOKEN != '' }}
         name: Commit Licenses
         working-directory: actions/role-sync
         env:
