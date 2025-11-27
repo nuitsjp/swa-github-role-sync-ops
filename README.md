@@ -6,9 +6,23 @@
 [![swa-github-role-sync](https://img.shields.io/github/v/release/nuitsjp/swa-github-role-sync?label=role-sync)](https://github.com/nuitsjp/swa-github-role-sync/releases/latest)
 [![swa-github-discussion-cleanup](https://img.shields.io/github/v/release/nuitsjp/swa-github-discussion-cleanup?label=discussion-cleanup)](https://github.com/nuitsjp/swa-github-discussion-cleanup/releases/latest)
 
+[日本語](README.ja.md)
+
 Provides reusable GitHub Actions for controlling access to Azure Static Web Apps (SWA) based on GitHub repository permissions.
 
 When hosting documentation on SWA that is associated with a GitHub repository, you can achieve access control such as "only users with read permission to the repository can view the content." This Action automatically syncs GitHub repository permissions (admin/maintain/write/triage/read) to SWA custom roles, and notifies target users with invitation links via GitHub Discussions.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Creating Azure Resources](#creating-azure-resources)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [License](#license)
 
 ## Overview
 
@@ -363,12 +377,9 @@ You can configure SWA role names corresponding to each GitHub permission:
 | Document | Contents |
 |----------|----------|
 | [docs/developer-guide.md](docs/developer-guide.md) | Development environment setup, testing, and release procedures |
-
-Each Action submodule also has detailed documentation:
-
-- [actions/role-sync/README.ja.md](actions/role-sync/README.ja.md) - Input/output parameters, usage examples
-- [actions/discussion-cleanup/README.ja.md](actions/discussion-cleanup/README.ja.md) - Cleanup configuration
+| [swa-github-role-sync](https://github.com/nuitsjp/swa-github-role-sync) | Detailed documentation for Role Sync Action |
+| [swa-github-discussion-cleanup](https://github.com/nuitsjp/swa-github-discussion-cleanup) | Detailed documentation for Discussion Cleanup Action |
 
 ## License
 
-MIT License - See the `LICENSE` file in each submodule for details.
+MIT License - See the `LICENSE` file in each repository for details.

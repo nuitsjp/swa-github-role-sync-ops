@@ -6,9 +6,23 @@
 [![swa-github-role-sync](https://img.shields.io/github/v/release/nuitsjp/swa-github-role-sync?label=role-sync)](https://github.com/nuitsjp/swa-github-role-sync/releases/latest)
 [![swa-github-discussion-cleanup](https://img.shields.io/github/v/release/nuitsjp/swa-github-discussion-cleanup?label=discussion-cleanup)](https://github.com/nuitsjp/swa-github-discussion-cleanup/releases/latest)
 
+[English](README.md)
+
 GitHubリポジトリの権限に基づいてAzure Static Web Apps（SWA）へのアクセスを制御するための再利用可能なGitHub Actionsを提供します。
 
 GitHubリポジトリ上のドキュメントをSWAでホストする際、「リポジトリへの読み取り権限を持つユーザーのみ閲覧可能」といったアクセス制御を実現できます。本Actionsは、GitHubリポジトリの権限（admin/maintain/write/triage/read）をSWAのカスタムロールへ自動同期し、対象ユーザーにはGitHub Discussionを通じて招待リンクを通知します。
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Azureリソースの作成](#azureリソースの作成)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [License](#license)
 
 ## Overview
 
@@ -363,12 +377,9 @@ Azure Cloud Adoption Frameworkの[リソース省略形ガイダンス](https://
 | ドキュメント | 内容 |
 |-------------|------|
 | [docs/developer-guide.ja.md](docs/developer-guide.ja.md) | 開発環境構築、テスト、リリース手順 |
-
-各Actionのサブモジュールにも詳細なドキュメントがあります：
-
-- [actions/role-sync/README.ja.md](actions/role-sync/README.ja.md) - 入出力パラメーター、使用例
-- [actions/discussion-cleanup/README.ja.md](actions/discussion-cleanup/README.ja.md) - クリーンアップ設定
+| [swa-github-role-sync](https://github.com/nuitsjp/swa-github-role-sync) | Role Sync Actionの詳細なドキュメント |
+| [swa-github-discussion-cleanup](https://github.com/nuitsjp/swa-github-discussion-cleanup) | Discussion Cleanup Actionの詳細なドキュメント |
 
 ## License
 
-MIT License - 詳細は各サブモジュールの`LICENSE`ファイルを参照してください。
+MIT License - 詳細は各リポジトリの`LICENSE`ファイルを参照してください。
